@@ -1,8 +1,9 @@
-_    = require 'lodash'
+_ = require 'lodash'
 http = require 'http'
 
 class PublishBroadcastReceived
   constructor: (options={}) ->
+    {@cache,@uuidAliasResolver} = options
 
   _doCallback: (request, code, callback) =>
     response =
@@ -13,9 +14,22 @@ class PublishBroadcastReceived
     callback null, response
 
   do: (request, callback) =>
-    {uuid, messageType, options} = request.metadata
-    message = JSON.parse request.rawData
+    {toUuid} = request.metadata
+    message = JSON.stringify @_buildMessage request
+    @_send {toUuid, message}, (error) =>
+      return callback error if error?
+      return @_doCallback request, 204, callback
 
-    return @_doCallback request, 204, callback
+  _buildMessage: (request) =>
+    return {
+      metadata:
+        route: request.metadata.route
+      rawData: request.rawData
+    }
+
+  _send: ({toUuid, message}, callback=->) =>
+    @uuidAliasResolver.resolve toUuid, (error, uuid) =>
+      return callback error if error?
+      @cache.publish "#{uuid}", message, callback
 
 module.exports = PublishBroadcastReceived
