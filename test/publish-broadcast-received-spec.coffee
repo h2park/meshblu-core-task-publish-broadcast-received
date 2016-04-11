@@ -18,7 +18,7 @@ describe 'PublishBroadcastReceived', ->
     @cache = redis.createClient @redisKey
 
   describe '->do', ->
-    context 'when given a valid message', ->
+    context 'when given a valid broadcast', ->
       beforeEach (done) ->
         @cache.subscribe 'receiver-uuid', (error) => done error
 
@@ -32,8 +32,8 @@ describe 'PublishBroadcastReceived', ->
             toUuid: 'receiver-uuid'
             fromUuid: 'receiver-uuid'
             route: [
-              {type: 'message.sent', fromUuid:'sender-uuid', toUuid: 'receiver-uuid'}
-              {type: 'message.received', fromUuid:'receiver-uuid', toUuid: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
+              {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
             ]
           rawData: '{"does_not":"matter"}'
 
@@ -55,8 +55,8 @@ describe 'PublishBroadcastReceived', ->
         expect(JSON.parse @message).to.deep.equal {
           metadata:
             route: [
-              {type: 'message.sent', fromUuid:'sender-uuid', toUuid: 'receiver-uuid'}
-              {type: 'message.received', fromUuid:'receiver-uuid', toUuid: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
+              {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
             ]
           rawData: '{"does_not":"matter"}'
         }
@@ -76,8 +76,8 @@ describe 'PublishBroadcastReceived', ->
             toUuid: 'muggle-mouth'
             fromUuid: 'sender-uuid'
             route: [
-              {type: 'message.sent', fromUuid:'sender-uuid', toUuid: 'receiver-uuid'}
-              {type: 'message.received', fromUuid:'receiver-uuid', toUuid: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
+              {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
             ]
             messageType: 'sent'
           rawData: '{"does_not":"matter"}'
@@ -101,8 +101,45 @@ describe 'PublishBroadcastReceived', ->
         expect(JSON.parse @message).to.deep.equal {
           metadata:
             route: [
-              {type: 'message.sent', fromUuid:'sender-uuid', toUuid: 'receiver-uuid'}
-              {type: 'message.received', fromUuid:'receiver-uuid', toUuid: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
+              {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
             ]
           rawData: '{"does_not":"matter"}'
         }
+
+    context 'when given a valid broadcast from me to me in the last hop', ->
+      beforeEach (done) ->
+        @cache.subscribe 'receiver-uuid', (error) => done error
+
+      beforeEach (done) ->
+        request =
+          metadata:
+            responseId: 'its-electric'
+            auth:
+              uuid: 'receiver-uuid'
+              token: 'receiver-token'
+            toUuid: 'receiver-uuid'
+            fromUuid: 'other-uuid'
+            route: [
+              {type: 'broadcast.received', from: 'sender-uuid', to: 'receiver-uuid'}
+            ]
+
+          rawData: '{"does_not":"matter"}'
+
+        @cache.once 'message', (channel, @message) => throw new Error('Should not publish this config')
+        @sut.do request, (error, @response) => done error
+
+      it 'should return a 204', ->
+        expectedResponse =
+          metadata:
+            responseId: 'its-electric'
+            code: 204
+            status: 'No Content'
+
+        expect(@response).to.deep.equal expectedResponse
+
+      it 'should not publish the message to redis', (done) ->
+        _.defer =>
+          expect(@message).not.to.exist
+          done()
+        , 100
