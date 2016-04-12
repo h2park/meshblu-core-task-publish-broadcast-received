@@ -32,8 +32,8 @@ describe 'PublishBroadcastReceived', ->
             toUuid: 'receiver-uuid'
             fromUuid: 'receiver-uuid'
             route: [
-              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
               {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
             ]
           rawData: '{"does_not":"matter"}'
 
@@ -55,8 +55,8 @@ describe 'PublishBroadcastReceived', ->
         expect(JSON.parse @message).to.deep.equal {
           metadata:
             route: [
-              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
               {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
             ]
           rawData: '{"does_not":"matter"}'
         }
@@ -76,8 +76,8 @@ describe 'PublishBroadcastReceived', ->
             toUuid: 'muggle-mouth'
             fromUuid: 'sender-uuid'
             route: [
-              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
               {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
             ]
             messageType: 'sent'
           rawData: '{"does_not":"matter"}'
@@ -101,8 +101,8 @@ describe 'PublishBroadcastReceived', ->
         expect(JSON.parse @message).to.deep.equal {
           metadata:
             route: [
-              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
               {type: 'broadcast.sent',     from: 'sender-uuid',   to: 'receiver-uuid'}
+              {type: 'broadcast.received', from: 'receiver-uuid', to: 'receiver-uuid'}
             ]
           rawData: '{"does_not":"matter"}'
         }
