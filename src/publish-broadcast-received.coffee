@@ -32,6 +32,7 @@ class PublishBroadcastReceived
   _buildMessage: (request) =>
     return {
       metadata:
+        responseId: request.metadata.responseId
         route: request.metadata.route
       rawData: request.rawData
     }
